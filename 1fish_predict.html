@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Teachable Machine Image Upload</title>
+</head>
+<body>
+
+<div>Teachable Machine Image Model (Upload Image)</div>
+
+<input type="file" accept="image/*" onchange="loadImage(event)">
+<br><br>
+
+<img id="preview" width="200" />
+<div id="label-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+<script type="text/javascript">
+    const URL = "https://teachablemachine.withgoogle.com/models/AAuFHsVjG/";
+
+    let model, labelContainer, maxPredictions;
+
+    // โหลดโมเดล
+    async function init() {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+
+        model = await tmImage.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
+
+        labelContainer = document.getElementById("label-container");
+        labelContainer.innerHTML = "";
+        for (let i = 0; i < maxPredictions; i++) {
+            labelContainer.appendChild(document.createElement("div"));
+        }
+    }
+
+    // อ่านไฟล์รูปด้วย FileReader
+    function loadImage(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function () {
+            const img = document.getElementById("preview");
+            img.src = reader.result;
+
+            img.onload = function () {
+                predict(img);
+            };
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // ทำนายผลจากรูปที่อัปโหลด
+    async function predict(imageElement) {
+        const prediction = await model.predict(imageElement);
+        for (let i = 0; i < maxPredictions; i++) {
+            const classPrediction =
+                prediction[i].className + ": " +
+                prediction[i].probability.toFixed(2);
+            labelContainer.childNodes[i].innerHTML = classPrediction;
+        }
+    }
+
+    // เรียกโหลดโมเดลทันที
+    init();
+</script>
+
+</body>
+</html>
